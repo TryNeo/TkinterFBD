@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 
 from fbdown import *
-from tkinter import ttk, messagebox
-import tkinter as tk
 from requests import *
+from tkinter import ttk, messagebox
+
+import tkinter as tk
 import requests
+import time
 
 class MainWindow:
     def __init__(self, root):
         root.title('')
-        root.geometry("700x500")
+        root.geometry("450x320")
         root.resizable(0, 0)
 
         root.update_idletasks()
@@ -25,6 +27,7 @@ class MainWindow:
         root.geometry('{}x{}+{}+{}'.format(width, height, x, y))
         root.deiconify()
 
+        self.root = root
 
         self.principal(root)
 
@@ -32,16 +35,18 @@ class MainWindow:
         self.url = tk.StringVar()
         self.name_format = tk.StringVar()
 
-        self.progressbar = ttk.Progressbar(root,length=100,mode='determinate').place(x=30, y=60, width=200)
+        self.progressbar = ttk.Progressbar(root)
+        self.progressbar.place(x=100, y=190, width=330)
 
-        label_url = tk.Label(root, text="URL:", font=("Arial", 12)).place(x=35, y=100)
-        entry_url = tk.Entry(root, width=40, textvariable=self.url).place(x=35, y=140)
+        label_title = tk.Label(root, text="FB TK-VIDEOS", font=("Arial", 15)).place(x=150, y=20)
 
-        label_name_format = tk.Label(root, text="Nombre:", font=("Arial", 12)).place(x=35, y=210)
-        entry_name_format = tk.Entry(root, width=40, textvariable=self.name_format).place(x=35, y=240)
-        
-        button_download = tk.Button(root, text="Descargar", font=("Arial", 12), command=self.dowloand_fb).place(x=35, y=350)
+        label_url = tk.Label(root, text="url:", font=("Arial", 12)).place(x=35, y=70)
+        entry_url = tk.Entry(root, width=40, textvariable=self.url).place(x=100, y=70)
 
+        label_name_format = tk.Label(root, text="name:", font=("Arial", 12)).place(x=35, y=120)
+        entry_name_format = tk.Entry(root, width=40, textvariable=self.name_format).place(x=100, y=120)
+
+        button_download = tk.Button(root, text="Descargar", font=("Arial", 12), command=self.dowloand_fb).place(x=170, y=240)
     def dowloand_fb(self):
         try:
             url = self.url.get()
@@ -65,18 +70,21 @@ class MainWindow:
         except requests.exceptions.HTTPError as d:
             messagebox.showerror(title="Error Dowloand", message=d)
 
-    def download(self,url, path):
+    def download(self,url=None, path=None,root=None):
         """
         credits to fbdown - overwriting its dowloand function 
         repo git : https://github.com/tbhaxor/fbdown 
         """
-        chunk = 1024  # 1kB
-        MB = float(chunk**2)
+        chunk = 1024
         r = get(url, stream=True)
         total = int(r.headers.get("content-length"))
-        print("Video Size : ", round(total / chunk, 2), "KB", end="\n\n")
+        self.progressbar.configure(maximum=int(round(total/chunk,2)))
         with open(path, "wb") as file:
-            for data in tqdm(iterable=r.iter_content(chunk_size=chunk), total=total / chunk, unit="KB"):
+            for i in range(int(round(total/chunk,2)+1)):
+                self.progressbar['value'] = i
+                self.root.update_idletasks()
+            
+            for data in tqdm(iterable=r.iter_content(chunk_size=chunk)):
                 file.write(data)
             file.close()
         messagebox.showinfo(title="Completed", message=f'Descargada completada.\nnombre:{path}\npeso:{self.convertbytes(total)}')
